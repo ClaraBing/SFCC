@@ -1,3 +1,5 @@
+# write.table(AA[1:3,], file="PerRange.csv", append=T, row.names=F, col.names=F,  sep=",")
+
 # Naive Bayes
 nb <- function(dtrain, dtest){
 	cats <- levels(dtrain$Category)
