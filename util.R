@@ -4,6 +4,9 @@ pkg <- function(){
   require('rpart')
   require('randomForest')
   require('party') # which requires strucchange
+  require('e1071') # for naiveBayes
+  require('glmnet') # for glmnet
+  require('nnet')
 }
 
 
@@ -11,9 +14,9 @@ pkg <- function(){
 preprocess <- function(input){
   copy <- input
   # category
-  if ("Category" %in% names(input)){
+  # if ("Category" %in% names(input)){
     #copy["Category"] <- match(as.character(input[,2]), levels(input[,2]))
-  }
+  # }
   
   # time
   # date time
@@ -50,7 +53,9 @@ preprocess <- function(input){
   copy["Dates"] <- NULL
   copy["Address"] <- NULL
   
-  copy
+  # copy <- proCoor(copy)
+  proCoor(copy)
+  # scale(copy)
 }
 
 # random sample 200000 data (reasonable size for training/testing)
@@ -79,9 +84,11 @@ normalize <- function(x){
   sweep(x, 2, apply(x, 2, max), "/") 
 }
 
-normCoor <- function(x){
+proCoor <- function(x){
   x <- sanitize(x)
   print(nrow(x))
+  # x$X <- round(normalize(x$X), digits=2)
+  # x$Y <- round(normalize(x$Y), digits=2)
   x$X <- normalize(x$X)
   x$Y <- normalize(x$Y)
   x
@@ -113,4 +120,31 @@ dum <- function(x){
   names(categoryMatrix)<-sort(unique(x$Category))
   x<-cbind(categoryMatrix,x)
   x
+}
+
+scale <- function(x){
+  # ~PdDistrict+X+Y+DayOfWeek+Year+Month+Day+HF
+  cols <- c("X","Y","PdDistrict", "DayOfWeek", "Year","Month","Day","HF")
+  myWeights <- c(3,3,1,2,1,1,1,3)
+  for (i in 1:8){
+    x[cols[i]] <- myWeights[i] * normalize(x[cols[i]])
+  }
+  x
+}
+
+getMinIdx <- function(dtrain){
+  # 9 minority classes
+  mins <- c('TREA','PORNOGRAPHY/OBSCENE MAT','GAMBLING','SEX OFFENSES NON FORCIBLE','EXTORTION','BRIBERY','BAD CHECKS','FAMILY OFFENSES','SUICIDE', 'EMBEZZLEMENT')
+  len <- 10
+  treaIdx <- which(dtrain$Category == 'TREA')
+  matIdx <- which(dtrain$Category == 'PORNOGRAPHY/OBSCENE MAT')
+  gbIdx <- which(dtrain$Category == 'GAMBLING')
+  sfIdx <- which(dtrain$Category == 'SEX OFFENSES NON FORCIBLE')
+  exIdx <- which(dtrain$Category == 'EXTORTION')
+  brIdx <- which(dtrain$Category == 'BRIBERY')
+  bcIdx <- which(dtrain$Category == 'BAD CHECKS')
+  foIdx <- which(dtrain$Category == 'FAMILY OFFENSES')
+  scIdx <- which(dtrain$Category == 'SUICIDE')
+  emIdx <- which(dtrain$Category == 'EMBEZZLEMENT')
+  print(length(c(treaIdx,matIdx,gbIdx,sfIdx,exIdx,brIdx,bcIdx,foIdx,scIdx,emIdx)))
 }
