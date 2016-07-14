@@ -18,11 +18,18 @@ pred <- predict(biTop, dtest, type='probs')
 biPred <- mapply(function(x){if(x>0.5){1}else{0}}, pred) # if the class is one of the top 3 classes
 
 # binary classifier for top 1 / 2and3
-top3Train <- dtrain[which(dtrain$top == 1),-c(1,2)]
+top3Train <- dtrain[which(dtrain$top == 1),-c(1,2)] # top 1-3 instances
 theftIn3 <- mapply(function(x){if(x=='LARCENY/THEFT'){1}else{0}}, top3Train$Category)
 top23 <- mapply(function(x){1-x}, theftIn3)
 top3Train <- data.frame(most=factor(theftIn3), to3=factor(top23), top3Train)
 biMost <- glm(most~X+Y+HF+DayOfWeek, data=top3Train[sample(250000, replace=T),], family=binomial(link='logit'))
+
+# binary classifier for class no.2 / no.3
+top23Train <- top3Train[which(top3Train$Category != 'LARCENY/THEFT'),] # containing top 2&3 instances
+no2 <- mapply(function(x){if(x=='OTHER OFFENSES'){1}else{0}}, top23Train$Category) # binary vector
+top23Train <- data.frame(no2=factor(no2), top23Train)
+bi23 <- multinom(no2~., top23Train)
+
 
 multinom(most~., top3Train[-2])
 
