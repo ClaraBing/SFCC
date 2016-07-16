@@ -9,6 +9,25 @@ pkg <- function(){
   require('nnet')
 }
 
+preCat <- function(input, isTrain){
+  # time
+  # date time
+  dt <- strptime(input$Dates, format="%Y-%m-%d %H:%M:%S")
+  # year
+  input["Year"] <- as.factor(year(dt))
+  # month
+  input["Month"] <- as.factor(month(dt))
+  # day
+  input["Day"] <- as.factor(day(dt))
+  # hours
+  h <- hour(dt)
+  # group minutes into half-hours
+  f <- unlist(lapply(minute(dt), function(x){ifelse(x<30, 0, 0.5)}))
+  hf <- f + h
+  input["HF"] <- as.factor(hf)
+  
+  proCoor(input, isTrain)
+}
 
 # preprocessing
 preprocess <- function(input){
@@ -84,8 +103,10 @@ normalize <- function(x){
   sweep(x, 2, apply(x, 2, max), "/") 
 }
 
-proCoor <- function(x){
-  x <- sanitize(x)
+proCoor <- function(x, isTrain){
+  if (isTrain){
+    x <- sanitize(x)
+  }
   print(nrow(x))
   # x$X <- round(normalize(x$X), digits=2)
   # x$Y <- round(normalize(x$Y), digits=2)
