@@ -26,7 +26,8 @@ preCat <- function(input, isTrain){
   hf <- f + h
   input["HF"] <- as.factor(hf)
   
-  proCoor(input, isTrain)
+  input
+  # proCoor(input, isTrain)
 }
 
 # preprocessing
@@ -34,7 +35,7 @@ preprocess <- function(input){
   copy <- input
   # category
   # if ("Category" %in% names(input)){
-    #copy["Category"] <- match(as.character(input[,2]), levels(input[,2]))
+  #copy["Category"] <- match(as.character(input[,2]), levels(input[,2]))
   # }
   
   # time
@@ -104,27 +105,30 @@ normalize <- function(x){
 }
 
 proCoor <- function(x, isTrain){
-  if (isTrain){
-    x <- sanitize(x)
-  }
+  x <- sanitize(x, isTrain)
   print(nrow(x))
   # x$X <- round(normalize(x$X), digits=2)
   # x$Y <- round(normalize(x$Y), digits=2)
-  x$X <- normalize(x$X)
-  x$Y <- normalize(x$Y)
+  x$X <- as.factor(round(normalize(x$X), digits = 2))
+  x$Y <- as.factor(round(normalize(x$Y), digits = 2))
   x
 }
 
 # replace the geo outliers with the average coordinates
-sanitize <- function(x){
+sanitize <- function(x, isTrain){
   coord <- which(x$X == -120.5)
   if(length(coord)!=0){
-    meanX <- mean(x[-coord,]$X)
-    meanY <- mean(x[-coord,]$Y)
-    x[coord,]$X <- meanX
-    x[coord,]$Y <- meanY
+    if (isTrain){ # train: discard outliers
+      x[-coord,]
+    }
+    else{ # test: make outliers the average
+      meanX <- mean(x[-coord,]$X)
+      meanY <- mean(x[-coord,]$Y)
+      x[coord,]$X <- meanX
+      x[coord,]$Y <- meanY
+      x
+    }
   }
-  x
 }
 
 MMLL <- function(act, pred, eps=1e-15){
@@ -169,3 +173,5 @@ getMinIdx <- function(dtrain){
   emIdx <- which(dtrain$Category == 'EMBEZZLEMENT')
   print(length(c(treaIdx,matIdx,gbIdx,sfIdx,exIdx,brIdx,bcIdx,foIdx,scIdx,emIdx)))
 }
+
+
